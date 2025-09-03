@@ -28,6 +28,7 @@ app.get("/", (req, res) => {
     <ul>
       <li><a href="/clients">👥 Clients</a></li>
       <li><a href="/factures">🧾 Factures</a></li>
+      <li><a href="/reparations">🔧 Réparations</a></li>
     </ul>
   `);
 });
@@ -59,7 +60,7 @@ app.post("/clients", (req, res) => {
     <p>Email : ${email}</p>
     <p>Téléphone : ${telephone}</p>
     <p>Adresse : ${adresse}</p>
-    <p><a href="/clients">⬅ Retour</a></p>
+    <p><a href="/clients">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
   `);
 });
 
@@ -91,7 +92,6 @@ app.post("/factures", (req, res) => {
     date: new Date().toLocaleDateString()
   };
 
-  // Ajoute la facture dans le dossier du client
   clientTrouve.factures.push(nouvelleFacture);
   enregistrerClients(clients);
 
@@ -107,6 +107,7 @@ app.post("/factures", (req, res) => {
     <p><a href="/factures">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
   `);
 });
+
 // ================= RÉPARATIONS =================
 app.get("/reparations", (req, res) => {
   res.sendFile(path.join(__dirname, "reparations.html"));
@@ -136,7 +137,6 @@ app.post("/reparations", (req, res) => {
     date: new Date().toLocaleDateString()
   };
 
-  // Ajoute la réparation dans le dossier du client
   clientTrouve.reparations.push(nouvelleReparation);
   enregistrerClients(clients);
 
@@ -151,7 +151,6 @@ app.post("/reparations", (req, res) => {
     <p><a href="/reparations">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
   `);
 });
-
 
 // ================== LANCEMENT ==================
 app.listen(PORT, () => {
