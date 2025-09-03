@@ -26,12 +26,13 @@ app.get("/", (req, res) => {
   res.send(`
     <h1>Bienvenue sur Atelier Réparation 📱</h1>
     <ul>
-      <li><a href="/clients">👥 Clients</a></li>
+      <li><a href="/clients">👥 Ajouter un client</a></li>
+      <li><a href="/clients/liste">📂 Liste des clients</a></li>
     </ul>
   `);
 });
 
-// ================= CLIENTS =================
+// ================= CLIENTS (AJOUT) =================
 app.get("/clients", (req, res) => {
   res.sendFile(path.join(__dirname, "clients.html"));
 });
@@ -68,6 +69,25 @@ app.post("/clients", (req, res) => {
     </p>
     <p><a href="/clients">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
   `);
+});
+
+// ================= CLIENTS (LISTE) =================
+app.get("/clients/liste", (req, res) => {
+  const clients = lireClients();
+
+  if (clients.length === 0) {
+    return res.send("<h2>📂 Aucun client enregistré.</h2><p><a href='/'>🏠 Accueil</a></p>");
+  }
+
+  let html = "<h1>📂 Liste des clients</h1><ul>";
+  clients.forEach(c => {
+    html += `<li>
+      <b>${c.nom}</b> (${c.email}, ${c.telephone}) - ${c.ville}, ${c.pays}
+    </li>`;
+  });
+  html += "</ul><p><a href='/'>🏠 Accueil</a></p>";
+
+  res.send(html);
 });
 
 // ================== LANCEMENT ==================
