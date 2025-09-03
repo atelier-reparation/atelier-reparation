@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 📂 Fichier pour stocker les clients
+// 📂 Fichier pour stocker les clients et leurs données
 const clientsFile = path.join(__dirname, "clients.json");
 
-// Fonction utilitaire pour lire/écrire le fichier
+// Fonctions utilitaires
 function lireClients() {
   if (!fs.existsSync(clientsFile)) return [];
   return JSON.parse(fs.readFileSync(clientsFile, "utf8"));
@@ -27,21 +27,20 @@ app.get("/", (req, res) => {
     <h1>Bienvenue sur Atelier Réparation 📱</h1>
     <ul>
       <li><a href="/clients">👥 Clients</a></li>
+      <li><a href="/factures">🧾 Factures</a></li>
     </ul>
   `);
 });
 
-// ================= PAGE CLIENTS =================
+// ================= CLIENTS =================
 app.get("/clients", (req, res) => {
   res.sendFile(path.join(__dirname, "clients.html"));
 });
 
 app.post("/clients", (req, res) => {
   const { nom, email, telephone, adresse } = req.body;
-
   let clients = lireClients();
 
-  // Crée un "dossier client"
   const nouveauClient = {
     id: clients.length + 1,
     nom,
@@ -64,6 +63,52 @@ app.post("/clients", (req, res) => {
   `);
 });
 
+// ================= FACTURES =================
+app.get("/factures", (req, res) => {
+  res.sendFile(path.join(__dirname, "factures.html"));
+});
+
+app.post("/factures", (req, res) => {
+  const { client, numero, montant } = req.body;
+  let clients = lireClients();
+
+  // Vérifie si le client existe
+  const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
+
+  if (!clientTrouve) {
+    return res.send(`
+      <h2>❌ Client "${client}" introuvable</h2>
+      <p>Ajoute d'abord le client avant de créer une facture.</p>
+      <a href="/clients">Ajouter un client</a>
+    `);
+  }
+
+  // Crée la facture
+  const nouvelleFacture = {
+    id: clientTrouve.factures.length + 1,
+    numero,
+    montant,
+    date: new Date().toLocaleDateString()
+  };
+
+  // Ajoute la facture dans le dossier du client
+  clientTrouve.factures.push(nouvelleFacture);
+  enregistrerClients(clients);
+
+  res.send(`
+    <h1>✅ Facture enregistrée</h1>
+    <p><b>Client :</b> ${clientTrouve.nom}</p>
+    <p><b>Numéro :</b> ${numero}</p>
+    <p><b>Montant :</b> ${montant} €</p>
+    <p><b>Date :</b> ${nouvelleFacture.date}</p>
+
+    <button onclick="window.print()">🖨️ Imprimer</button>
+
+    <p><a href="/factures">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
+});
+
+// ================== LANCEMENT ==================
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
