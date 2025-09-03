@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 📂 Fichier pour stocker les clients
 const clientsFile = path.join(__dirname, "clients.json");
 
 // Fonctions utilitaires
@@ -64,125 +63,14 @@ app.post("/clients", (req, res) => {
     <p><a href="/clients/liste">Voir la liste</a> | <a href="/">🏠 Accueil</a></p>`);
 });
 
-// Liste des clients
-app.get("/clients/liste", (req, res) => {
-  const clients = lireClients();
-
-  if (clients.length === 0) {
-    return res.send("<h2>📂 Aucun client enregistré.</h2><p><a href='/'>🏠 Accueil</a></p>");
-  }
-
-  let html = "<h1>📂 Liste des clients</h1><ul>";
-  clients.forEach(c => {
-    html += `<li>
-      <b><a href="/clients/${c.id}">${c.nom}</a></b> (${c.email}, ${c.telephone})
-      - <a href="/clients/${c.id}/modifier">✏️ Modifier</a>
-      - <a href="/clients/${c.id}/supprimer" onclick="return confirm('Supprimer ${c.nom} ?')">🗑️ Supprimer</a>
-    </li>`;
-  });
-  html += "</ul><p><a href='/'>🏠 Accueil</a></p>";
-
-  res.send(html);
-});
-
-// 🔎 Détails d’un client
-app.get("/clients/:id", (req, res) => {
-  const clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.id));
-
-  if (!client) {
-    return res.send("<h2>❌ Client introuvable</h2><p><a href='/clients/liste'>⬅ Retour</a></p>");
-  }
-
-  let html = `<h1>📂 Dossier de ${client.nom}</h1>
-    <p><b>Email :</b> ${client.email}</p>
-    <p><b>Téléphone :</b> ${client.telephone}</p>
-    <p><a href="/clients/${client.id}/modifier">✏️ Modifier</a> | 
-       <a href="/clients/${client.id}/supprimer" onclick="return confirm('Supprimer ${client.nom} ?')">🗑️ Supprimer</a></p>
-    <h2>🧾 Factures</h2>`;
-
-  if (client.factures.length === 0) {
-    html += "<p>Aucune facture</p>";
-  } else {
-    client.factures.forEach(f => {
-      html += `<div style="border:1px solid #ccc; padding:10px; margin:5px;">
-        <p><b>Facture #${f.numero}</b> - ${f.montant} € (${f.date})</p>
-        <a href="/factures/${client.id}/${f.numero}">📄 Voir la facture</a>
-      </div>`;
-    });
-  }
-
-  html += "<h2>🔧 Réparations</h2>";
-  if (client.reparations.length === 0) {
-    html += "<p>Aucune réparation</p>";
-  } else {
-    client.reparations.forEach(r => {
-      html += `<p>${r.appareil} - ${r.probleme} (${r.statut}) [${r.date}]</p>`;
-    });
-  }
-
-  html += `<p><a href="/clients/liste">⬅ Retour</a></p>`;
-  res.send(html);
-});
-
-// ================= MODIFIER CLIENT =================
-app.get("/clients/:id/modifier", (req, res) => {
-  const clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.id));
-
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  res.send(`
-    <h1>✏️ Modifier ${client.nom}</h1>
-    <form action="/clients/${client.id}/modifier" method="post">
-      <label>Nom :</label><br>
-      <input type="text" name="nom" value="${client.nom}" required><br><br>
-      <label>Email :</label><br>
-      <input type="email" name="email" value="${client.email}" required><br><br>
-      <label>Téléphone :</label><br>
-      <input type="text" name="telephone" value="${client.telephone}" required><br><br>
-      <button type="submit">💾 Sauvegarder</button>
-    </form>
-    <p><a href="/clients/${client.id}">⬅ Retour au dossier</a></p>
-  `);
-});
-
-app.post("/clients/:id/modifier", (req, res) => {
-  let clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.id));
-
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  client.nom = req.body.nom;
-  client.email = req.body.email;
-  client.telephone = req.body.telephone;
-
-  enregistrerClients(clients);
-
-  res.send(`<h2>✅ Client modifié avec succès</h2>
-            <p><a href="/clients/${client.id}">⬅ Retour au dossier</a></p>`);
-});
-
-// ================= SUPPRIMER CLIENT =================
-app.get("/clients/:id/supprimer", (req, res) => {
-  let clients = lireClients();
-  clients = clients.filter(c => c.id !== parseInt(req.params.id));
-
-  clients.forEach((c, i) => c.id = i + 1);
-  enregistrerClients(clients);
-
-  res.send(`<h2>🗑️ Client supprimé</h2>
-            <p><a href="/clients/liste">⬅ Retour à la liste</a></p>`);
-});
-
 // ================= FACTURES =================
 app.get("/factures", (req, res) => {
   res.sendFile(path.join(__dirname, "factures.html"));
 });
 
-// Création d'une facture pro
+// Création facture avec plusieurs lignes
 app.post("/factures", (req, res) => {
-  const { client, numero, montant } = req.body;
+  const { client, numero, designation, quantite, prix } = req.body;
   let clients = lireClients();
 
   const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
@@ -190,21 +78,52 @@ app.post("/factures", (req, res) => {
     return res.send(`<h2>❌ Client "${client}" introuvable</h2><a href="/clients">Ajouter un client</a>`);
   }
 
+  // Construire lignes
+  let lignes = [];
+  let totalGlobal = 0;
+
+  for (let i = 0; i < designation.length; i++) {
+    const qte = parseFloat(quantite[i]) || 0;
+    const pu = parseFloat(prix[i]) || 0;
+    const total = qte * pu;
+    totalGlobal += total;
+
+    lignes.push({
+      designation: designation[i],
+      quantite: qte,
+      prix: pu,
+      total: total
+    });
+  }
+
   const nouvelleFacture = {
     id: clientTrouve.factures.length + 1,
     numero,
-    montant,
-    date: new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date())
+    date: new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date()),
+    lignes,
+    montant: totalGlobal
   };
 
   clientTrouve.factures.push(nouvelleFacture);
   enregistrerClients(clients);
 
+  // Affichage facture pro
+  let lignesHTML = "";
+  nouvelleFacture.lignes.forEach(l => {
+    lignesHTML += `
+      <tr>
+        <td>${l.designation}</td>
+        <td>${l.quantite}</td>
+        <td>${l.prix.toFixed(2)}</td>
+        <td>${l.total.toFixed(2)}</td>
+      </tr>`;
+  });
+
   res.send(`
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Facture #${numero}</title>
+      <title>Facture #${nouvelleFacture.numero}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         h1 { text-align: center; }
@@ -231,7 +150,7 @@ app.post("/factures", (req, res) => {
           </div>
         </div>
 
-        <h2>Facture #${numero}</h2>
+        <h2>Facture #${nouvelleFacture.numero}</h2>
         <p><b>Date :</b> ${nouvelleFacture.date}</p>
 
         <h3>Client :</h3>
@@ -249,16 +168,11 @@ app.post("/factures", (req, res) => {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Réparation effectuée</td>
-              <td>1</td>
-              <td>${montant}</td>
-              <td>${montant}</td>
-            </tr>
+            ${lignesHTML}
           </tbody>
         </table>
 
-        <p class="total">Total : ${montant} €</p>
+        <p class="total">Total : ${nouvelleFacture.montant.toFixed(2)} €</p>
 
         <div class="footer">
           <p>Conditions de paiement : à réception</p>
@@ -273,18 +187,6 @@ app.post("/factures", (req, res) => {
     </body>
     </html>
   `);
-});
-
-// Voir facture enregistrée
-app.get("/factures/:clientId/:numero", (req, res) => {
-  const clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.clientId));
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  const facture = client.factures.find(f => f.numero === req.params.numero);
-  if (!facture) return res.send("<h2>❌ Facture introuvable</h2>");
-
-  res.send(`<h1>Facture #${facture.numero}</h1><p>Montant : ${facture.montant} €</p><p>Date : ${facture.date}</p>`);
 });
 
 // ================= RÉPARATIONS =================
@@ -327,6 +229,3 @@ app.post("/reparations", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
-
-
- 
