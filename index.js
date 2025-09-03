@@ -107,6 +107,51 @@ app.post("/factures", (req, res) => {
     <p><a href="/factures">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
   `);
 });
+// ================= RÉPARATIONS =================
+app.get("/reparations", (req, res) => {
+  res.sendFile(path.join(__dirname, "reparations.html"));
+});
+
+app.post("/reparations", (req, res) => {
+  const { client, appareil, probleme, statut } = req.body;
+  let clients = lireClients();
+
+  // Vérifie si le client existe
+  const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
+
+  if (!clientTrouve) {
+    return res.send(`
+      <h2>❌ Client "${client}" introuvable</h2>
+      <p>Ajoute d'abord le client avant de créer une réparation.</p>
+      <a href="/clients">Ajouter un client</a>
+    `);
+  }
+
+  // Crée la réparation
+  const nouvelleReparation = {
+    id: clientTrouve.reparations.length + 1,
+    appareil,
+    probleme,
+    statut,
+    date: new Date().toLocaleDateString()
+  };
+
+  // Ajoute la réparation dans le dossier du client
+  clientTrouve.reparations.push(nouvelleReparation);
+  enregistrerClients(clients);
+
+  res.send(`
+    <h1>✅ Réparation enregistrée</h1>
+    <p><b>Client :</b> ${clientTrouve.nom}</p>
+    <p><b>Appareil :</b> ${appareil}</p>
+    <p><b>Problème :</b> ${probleme}</p>
+    <p><b>Statut :</b> ${statut}</p>
+    <p><b>Date :</b> ${nouvelleReparation.date}</p>
+
+    <p><a href="/reparations">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
+});
+
 
 // ================== LANCEMENT ==================
 app.listen(PORT, () => {
