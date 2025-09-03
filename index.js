@@ -84,7 +84,8 @@ app.get("/clients/liste", (req, res) => {
   let html = "<h1>📂 Liste des clients</h1><ul>";
   clients.forEach(c => {
     html += `<li>
-      <b>${c.nom}</b> (${c.email}, ${c.telephone}) - ${c.ville}, ${c.pays}
+      <b><a href="/clients/${c.id}">${c.nom}</a></b> 
+      (${c.email}, ${c.telephone}) - ${c.ville}, ${c.pays}
       <ul>
         <li>Factures : ${c.factures.length}</li>
         <li>Réparations : ${c.reparations.length}</li>
@@ -92,6 +93,53 @@ app.get("/clients/liste", (req, res) => {
     </li>`;
   });
   html += "</ul><p><a href='/'>🏠 Accueil</a></p>";
+
+  res.send(html);
+});
+
+// 🔎 Détails d’un client
+app.get("/clients/:id", (req, res) => {
+  const clients = lireClients();
+  const client = clients.find(c => c.id === parseInt(req.params.id));
+
+  if (!client) {
+    return res.send("<h2>❌ Client introuvable</h2><p><a href='/clients/liste'>⬅ Retour à la liste</a></p>");
+  }
+
+  let html = `<h1>📂 Dossier de ${client.nom}</h1>
+    <p><b>Email :</b> ${client.email}</p>
+    <p><b>Téléphone :</b> ${client.telephone}</p>
+    <p><b>Adresse :</b><br>
+       ${client.adresse}${client.adresse2 ? "<br>" + client.adresse2 : ""}<br>
+       ${client.cp} ${client.ville}<br>
+       ${client.pays}
+    </p>`;
+
+  // Factures
+  html += "<h2>🧾 Factures</h2>";
+  if (client.factures.length === 0) {
+    html += "<p>Aucune facture</p>";
+  } else {
+    html += "<ul>";
+    client.factures.forEach(f => {
+      html += `<li>Facture #${f.numero} - ${f.montant} € (${f.date})</li>`;
+    });
+    html += "</ul>";
+  }
+
+  // Réparations
+  html += "<h2>🔧 Réparations</h2>";
+  if (client.reparations.length === 0) {
+    html += "<p>Aucune réparation</p>";
+  } else {
+    html += "<ul>";
+    client.reparations.forEach(r => {
+      html += `<li>${r.appareil} - ${r.probleme} (${r.statut}) [${r.date}]</li>`;
+    });
+    html += "</ul>";
+  }
+
+  html += `<p><a href="/clients/liste">⬅ Retour à la liste</a> | <a href="/">🏠 Accueil</a></p>`;
 
   res.send(html);
 });
@@ -173,3 +221,5 @@ app.post("/reparations", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
+  
+ 
