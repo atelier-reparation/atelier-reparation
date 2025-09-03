@@ -2,24 +2,115 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Factures</title>
+  <title>Créer une facture</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { text-align: center; }
+    .facture {
+      border: 1px solid #333;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    .header, .footer {
+      display: flex;
+      justify-content: space-between;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .total {
+      text-align: right;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .actions {
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <h1>🧾 Nouvelle facture</h1>
-
+  <h1>🧾 Création d'une facture</h1>
   <form action="/factures" method="post">
-    <label>Nom du client :</label><br>
-    <input type="text" name="client" placeholder="Ex: Dupont Jean" required><br><br>
+    <label>Client (nom exact) :</label><br>
+    <input type="text" name="client" required><br><br>
 
     <label>Numéro de facture :</label><br>
-    <input type="text" name="numero" placeholder="FAC-2025-001" required><br><br>
+    <input type="text" name="numero" required><br><br>
 
-    <label>Montant (€) :</label><br>
-    <input type="number" step="0.01" name="montant" required><br><br>
+    <label>Montant total (€) :</label><br>
+    <input type="number" name="montant" required><br><br>
 
-    <button type="submit">✅ Enregistrer la facture</button>
+    <button type="submit">💾 Enregistrer la facture</button>
   </form>
 
-  <p><a href="/">⬅ Retour à l’accueil</a></p>
+  <hr>
+
+  <div class="facture">
+    <div class="header">
+      <div>
+        <h2>Atelier Réparation</h2>
+        <p>123 Rue Exemple<br>
+        38460 Trept<br>
+        contact@atelier-reparation.fr</p>
+      </div>
+      <div>
+        <img src="logo.png" alt="Logo" width="100">
+      </div>
+    </div>
+
+    <h2>Facture #0001</h2>
+    <p><b>Date :</b> 3 septembre 2025</p>
+
+    <h3>Client :</h3>
+    <p>Nom du client<br>Email : client@mail.com<br>Téléphone : 06 00 00 00 00</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Désignation</th>
+          <th>Quantité</th>
+          <th>Prix unitaire (€)</th>
+          <th>Total (€)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Réparation écran iPhone</td>
+          <td>1</td>
+          <td>90</td>
+          <td>90</td>
+        </tr>
+        <tr>
+          <td>Changement batterie</td>
+          <td>1</td>
+          <td>50</td>
+          <td>50</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="total">Total : 140 €</p>
+
+    <div class="footer">
+      <p>Conditions de paiement : à réception</p>
+      <p>Merci de votre confiance 🙏</p>
+    </div>
+
+    <div class="actions">
+      <button onclick="window.print()">🖨️ Imprimer</button>
+    </div>
+  </div>
 </body>
 </html>
