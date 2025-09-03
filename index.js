@@ -10,7 +10,7 @@ app.use(express.json());
 
 const clientsFile = path.join(__dirname, "clients.json");
 
-// Fonctions utilitaires
+// =================== UTILITAIRES ===================
 function lireClients() {
   if (!fs.existsSync(clientsFile)) return [];
   return JSON.parse(fs.readFileSync(clientsFile, "utf8"));
@@ -20,10 +20,19 @@ function enregistrerClients(clients) {
   fs.writeFileSync(clientsFile, JSON.stringify(clients, null, 2));
 }
 
-// ================= PAGE D’ACCUEIL =================
+// Coordonnées fixes de l’entreprise
+const entreprise = {
+  nom: "Atelier Réparation",
+  adresse: "58 chemin de la lionne, 38460 Trept",
+  telephone: "04 74 33 63 91",
+  email: "contact@atelier-reparation.fr",
+  siret: "XXXXXXXXXXXXX"
+};
+
+// =================== ACCUEIL ===================
 app.get("/", (req, res) => {
   res.send(`
-    <h1>Bienvenue sur Atelier Réparation 📱</h1>
+    <h1>Bienvenue sur ${entreprise.nom} 📱</h1>
     <ul>
       <li><a href="/clients">👥 Ajouter un client</a></li>
       <li><a href="/clients/liste">📂 Liste des clients</a></li>
@@ -33,7 +42,7 @@ app.get("/", (req, res) => {
   `);
 });
 
-// ================= CLIENTS =================
+// =================== CLIENTS ===================
 app.get("/clients", (req, res) => {
   res.sendFile(path.join(__dirname, "clients.html"));
 });
@@ -124,57 +133,7 @@ app.get("/clients/:id", (req, res) => {
   res.send(html);
 });
 
-// ✏️ Modifier client
-app.get("/clients/:id/modifier", (req, res) => {
-  const clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.id));
-
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  res.send(`
-    <h1>✏️ Modifier ${client.nom}</h1>
-    <form action="/clients/${client.id}/modifier" method="post">
-      <label>Nom :</label><br>
-      <input type="text" name="nom" value="${client.nom}" required><br><br>
-      <label>Email :</label><br>
-      <input type="email" name="email" value="${client.email}" required><br><br>
-      <label>Téléphone :</label><br>
-      <input type="text" name="telephone" value="${client.telephone}" required><br><br>
-      <button type="submit">💾 Sauvegarder</button>
-    </form>
-    <p><a href="/clients/${client.id}">⬅ Retour au dossier</a></p>
-  `);
-});
-
-app.post("/clients/:id/modifier", (req, res) => {
-  let clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.id));
-
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  client.nom = req.body.nom;
-  client.email = req.body.email;
-  client.telephone = req.body.telephone;
-
-  enregistrerClients(clients);
-
-  res.send(`<h2>✅ Client modifié avec succès</h2>
-            <p><a href="/clients/${client.id}">⬅ Retour au dossier</a></p>`);
-});
-
-// 🗑️ Supprimer client
-app.get("/clients/:id/supprimer", (req, res) => {
-  let clients = lireClients();
-  clients = clients.filter(c => c.id !== parseInt(req.params.id));
-
-  clients.forEach((c, i) => c.id = i + 1);
-  enregistrerClients(clients);
-
-  res.send(`<h2>🗑️ Client supprimé</h2>
-            <p><a href="/clients/liste">⬅ Retour à la liste</a></p>`);
-});
-
-// ================= FACTURES MULTI-LIGNES =================
+// =================== FACTURES ===================
 app.get("/factures", (req, res) => {
   res.sendFile(path.join(__dirname, "factures.html"));
 });
@@ -242,10 +201,11 @@ app.post("/factures", (req, res) => {
       <div class="facture">
         <div class="header">
           <div>
-            <h2>Atelier Réparation</h2>
-            <p>58 chemin de la Lionne<br>
-            38460 Trept<br>
-            contact@atelier-reparation.fr</p>
+            <h2>${entreprise.nom}</h2>
+            <p>${entreprise.adresse}<br>
+            📞 ${entreprise.telephone}<br>
+            ✉️ ${entreprise.email}<br>
+            SIRET : ${entreprise.siret}</p>
           </div>
           <div>
             <img src="logo.png" alt="Logo" width="100">
@@ -291,19 +251,7 @@ app.post("/factures", (req, res) => {
   `);
 });
 
-// Voir facture enregistrée
-app.get("/factures/:clientId/:numero", (req, res) => {
-  const clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(req.params.clientId));
-  if (!client) return res.send("<h2>❌ Client introuvable</h2>");
-
-  const facture = client.factures.find(f => f.numero === req.params.numero);
-  if (!facture) return res.send("<h2>❌ Facture introuvable</h2>");
-
-  res.json(facture);
-});
-
-// ================= RÉPARATIONS =================
+// =================== RÉPARATIONS ===================
 app.get("/reparations", (req, res) => {
   res.sendFile(path.join(__dirname, "reparations.html"));
 });
@@ -339,7 +287,7 @@ app.post("/reparations", (req, res) => {
     <p><a href="/reparations">⬅ Retour</a></p>`);
 });
 
-// ================== LANCEMENT ==================
+// =================== LANCEMENT ===================
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
