@@ -5,21 +5,36 @@
   <title>Gestion des Clients</title>
 </head>
 <body>
-  <h1>📋 Gestion des Clients</h1>
+  <h1>👥 Gestion des Clients</h1>
+
   <form action="/clients" method="post">
-    <label>Nom :</label><br>
-    <input type="text" name="nom" required><br><br>
+    <label>Nom complet :</label><br>
+    <input type="text" name="nom" placeholder="Ex : Dupont Jean" required><br><br>
 
     <label>Email :</label><br>
-    <input type="email" name="email" required><br><br>
+    <input type="email" name="email" placeholder="exemple@mail.com" required><br><br>
 
     <label>Téléphone :</label><br>
-    <input type="text" name="telephone" required><br><br>
+    <input type="text" name="telephone" placeholder="06 12 34 56 78" required><br><br>
 
     <label>Adresse :</label><br>
-    <input type="text" name="adresse" required><br><br>
+    <input type="text" name="adresse" placeholder="N° et rue" required><br><br>
 
-    <button type="submit">Enregistrer le client</button>
+    <label>Complément d'adresse :</label><br>
+    <input type="text" name="adresse2" placeholder="Appartement, étage, etc."><br><br>
+
+    <label>Code Postal :</label><br>
+    <input type="text" name="cp" placeholder="75001" required><br><br>
+
+    <label>Ville :</label><br>
+    <input type="text" name="ville" placeholder="Paris" required><br><br>
+
+    <label>Pays :</label><br>
+    <input type="text" name="pays" placeholder="France" required><br><br>
+
+    <button type="submit">✅ Enregistrer le client</button>
   </form>
+
+  <p><a href="/">⬅ Retour à l’accueil</a></p>
 </body>
 </html>
