@@ -168,7 +168,7 @@ app.get("/clients/:id/supprimer", (req, res) => {
   let clients = lireClients();
   clients = clients.filter(c => c.id !== parseInt(req.params.id));
 
-  // Réassigner les IDs pour éviter les trous
+  // Réassigner les IDs
   clients.forEach((c, i) => c.id = i + 1);
 
   enregistrerClients(clients);
@@ -215,7 +215,7 @@ app.get("/reparations", (req, res) => {
 });
 
 app.post("/reparations", (req, res) => {
-  const { client, appareil, probleme, statut } = req.body;
+  const { client, appareil, probleme, statut, date } = req.body;
   let clients = lireClients();
 
   const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
@@ -228,7 +228,7 @@ app.post("/reparations", (req, res) => {
     appareil,
     probleme,
     statut,
-    date: new Date().toLocaleDateString()
+    date: date && date.trim() !== "" ? date : new Date().toLocaleDateString()
   };
 
   clientTrouve.reparations.push(nouvelleReparation);
@@ -239,6 +239,7 @@ app.post("/reparations", (req, res) => {
     <p><b>Appareil :</b> ${appareil}</p>
     <p><b>Problème :</b> ${probleme}</p>
     <p><b>Statut :</b> ${statut}</p>
+    <p><b>Date :</b> ${nouvelleReparation.date}</p>
     <p><a href="/reparations">⬅ Retour</a></p>`);
 });
 
