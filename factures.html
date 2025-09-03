@@ -10,10 +10,22 @@
     th, td { border: 1px solid #aaa; padding: 10px; text-align: left; }
     th { background: #f0f0f0; }
     .add-btn { margin-top: 10px; }
+    .entreprise { border: 1px solid #333; padding: 15px; margin-bottom: 20px; background: #f9f9f9; }
   </style>
 </head>
 <body>
   <h1>🧾 Création d'une facture</h1>
+
+  <!-- Coordonnées de l’entreprise -->
+  <div class="entreprise">
+    <h2>Atelier Réparation</h2>
+    <p>📍 58 Chemin de la Lionne, 38460 Trept</p>
+    <p>📞 04 74 33 63 91</p>
+    <p>✉️ contact@atelier-reparation.fr</p>
+    <p>SIRET : 123 456 789 00012</p>
+  </div>
+
+  <!-- Formulaire facture -->
   <form id="factureForm" action="/factures" method="post">
     <label>Client (nom exact) :</label><br>
     <input type="text" name="client" required><br><br>
