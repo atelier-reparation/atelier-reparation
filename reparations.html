@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Réparations</title>
+</head>
+<body>
+  <h1>🔧 Nouvelle réparation</h1>
+
+  <form action="/reparations" method="post">
+    <label>Nom du client :</label><br>
+    <input type="text" name="client" placeholder="Ex: Dupont Jean" required><br><br>
+
+    <label>Appareil :</label><br>
+    <input type="text" name="appareil" placeholder="Ex: iPhone 12" required><br><br>
+
+    <label>Problème :</label><br>
+    <input type="text" name="probleme" placeholder="Ex: écran cassé" required><br><br>
+
+    <label>Statut :</label><br>
+    <select name="statut" required>
+      <option value="En attente">En attente</option>
+      <option value="En cours">En cours</option>
+      <option value="Terminé">Terminé</option>
+    </select><br><br>
+
+    <button type="submit">✅ Enregistrer la réparation</button>
+  </form>
+
+  <p><a href="/">⬅ Retour à l’accueil</a></p>
+</body>
+</html>
