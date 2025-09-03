@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-const nodemailer = require("nodemailer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,10 +60,17 @@ app.post("/clients", (req, res) => {
   clients.push(nouveauClient);
   enregistrerClients(clients);
 
-  res.send(`<h2>✅ Client ${nom} enregistré</h2>
+  res.send(`
+    <h2>✅ Client ${nom} enregistré</h2>
     <p><b>Email :</b> ${email}</p>
     <p><b>Téléphone :</b> ${telephone}</p>
-    <p><a href="/clients">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>`);
+    <p><b>Adresse :</b><br>
+       ${adresse}${adresse2 ? "<br>" + adresse2 : ""}<br>
+       ${cp} ${ville}<br>
+       ${pays}
+    </p>
+    <p><a href="/clients">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
 });
 
 // Liste des clients
@@ -78,7 +84,12 @@ app.get("/clients/liste", (req, res) => {
   let html = "<h1>📂 Liste des clients</h1><ul>";
   clients.forEach(c => {
     html += `<li>
-      <b><a href="/clients/${c.id}">${c.nom}</a></b> (${c.email}, ${c.telephone})
+      <b><a href="/clients/${c.id}">${c.nom}</a></b> 
+      (${c.email}, ${c.telephone}) - ${c.ville}, ${c.pays}
+      <ul>
+        <li>Factures : ${c.factures.length}</li>
+        <li>Réparations : ${c.reparations.length}</li>
+      </ul>
     </li>`;
   });
   html += "</ul><p><a href='/'>🏠 Accueil</a></p>";
@@ -92,40 +103,44 @@ app.get("/clients/:id", (req, res) => {
   const client = clients.find(c => c.id === parseInt(req.params.id));
 
   if (!client) {
-    return res.send("<h2>❌ Client introuvable</h2><p><a href='/clients/liste'>⬅ Retour</a></p>");
+    return res.send("<h2>❌ Client introuvable</h2><p><a href='/clients/liste'>⬅ Retour à la liste</a></p>");
   }
 
   let html = `<h1>📂 Dossier de ${client.nom}</h1>
     <p><b>Email :</b> ${client.email}</p>
     <p><b>Téléphone :</b> ${client.telephone}</p>
-    <h2>🧾 Factures</h2>`;
+    <p><b>Adresse :</b><br>
+       ${client.adresse}${client.adresse2 ? "<br>" + client.adresse2 : ""}<br>
+       ${client.cp} ${client.ville}<br>
+       ${client.pays}
+    </p>`;
 
+  // Factures
+  html += "<h2>🧾 Factures</h2>";
   if (client.factures.length === 0) {
     html += "<p>Aucune facture</p>";
   } else {
+    html += "<ul>";
     client.factures.forEach(f => {
-      html += `<div style="border:1px solid #ccc; padding:10px; margin:5px;">
-        <p><b>Facture #${f.numero}</b> - ${f.montant} € (${f.date})</p>
-        <button onclick="window.print()">🖨️ Imprimer</button>
-        <form action="/envoyer-facture" method="post" style="display:inline;">
-          <input type="hidden" name="idClient" value="${client.id}">
-          <input type="hidden" name="idFacture" value="${f.id}">
-          <button type="submit">📧 Envoyer par mail</button>
-        </form>
-      </div>`;
+      html += `<li>Facture #${f.numero} - ${f.montant} € (${f.date})</li>`;
     });
+    html += "</ul>";
   }
 
+  // Réparations
   html += "<h2>🔧 Réparations</h2>";
   if (client.reparations.length === 0) {
     html += "<p>Aucune réparation</p>";
   } else {
+    html += "<ul>";
     client.reparations.forEach(r => {
-      html += `<p>${r.appareil} - ${r.probleme} (${r.statut}) [${r.date}]</p>`;
+      html += `<li>${r.appareil} - ${r.probleme} (${r.statut}) [${r.date}]</li>`;
     });
+    html += "</ul>";
   }
 
-  html += `<p><a href="/clients/liste">⬅ Retour</a></p>`;
+  html += `<p><a href="/clients/liste">⬅ Retour à la liste</a> | <a href="/">🏠 Accueil</a></p>`;
+
   res.send(html);
 });
 
@@ -140,7 +155,8 @@ app.post("/factures", (req, res) => {
 
   const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
   if (!clientTrouve) {
-    return res.send(`<h2>❌ Client "${client}" introuvable</h2><a href="/clients">Ajouter un client</a>`);
+    return res.send(`<h2>❌ Client "${client}" introuvable</h2>
+                     <a href="/clients">Ajouter un client</a>`);
   }
 
   const nouvelleFacture = {
@@ -153,47 +169,15 @@ app.post("/factures", (req, res) => {
   clientTrouve.factures.push(nouvelleFacture);
   enregistrerClients(clients);
 
-  res.send(`<h1>✅ Facture enregistrée</h1>
+  res.send(`
+    <h1>✅ Facture enregistrée</h1>
     <p><b>Client :</b> ${clientTrouve.nom}</p>
     <p><b>Numéro :</b> ${numero}</p>
     <p><b>Montant :</b> ${montant} €</p>
+    <p><b>Date :</b> ${nouvelleFacture.date}</p>
     <button onclick="window.print()">🖨️ Imprimer</button>
-    <p><a href="/factures">⬅ Retour</a></p>`);
-});
-
-// ================= ENVOYER FACTURE PAR EMAIL =================
-app.post("/envoyer-facture", (req, res) => {
-  const { idClient, idFacture } = req.body;
-  let clients = lireClients();
-  const client = clients.find(c => c.id === parseInt(idClient));
-
-  if (!client) return res.send("❌ Client introuvable.");
-  const facture = client.factures.find(f => f.id === parseInt(idFacture));
-  if (!facture) return res.send("❌ Facture introuvable.");
-
-  // 📧 Configuration du mail
-  let transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "tonadresse@gmail.com", // à remplacer
-      pass: "tonmotdepasse" // à remplacer
-    }
-  });
-
-  const mailOptions = {
-    from: "Atelier Réparation <tonadresse@gmail.com>",
-    to: client.email,
-    subject: `Votre facture #${facture.numero}`,
-    text: `Bonjour ${client.nom},\n\nVoici votre facture : ${facture.montant} € du ${facture.date}.\n\nMerci de votre confiance.\n\nAtelier Réparation`
-  };
-
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.error(err);
-      return res.send("❌ Erreur lors de l'envoi de l'email.");
-    }
-    res.send(`✅ Facture envoyée à ${client.email}<br><a href="/clients/${client.id}">⬅ Retour au dossier</a>`);
-  });
+    <p><a href="/factures">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
 });
 
 // ================= RÉPARATIONS =================
@@ -207,7 +191,8 @@ app.post("/reparations", (req, res) => {
 
   const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
   if (!clientTrouve) {
-    return res.send(`<h2>❌ Client "${client}" introuvable</h2><a href="/clients">Ajouter un client</a>`);
+    return res.send(`<h2>❌ Client "${client}" introuvable</h2>
+                     <a href="/clients">Ajouter un client</a>`);
   }
 
   const nouvelleReparation = {
@@ -221,16 +206,18 @@ app.post("/reparations", (req, res) => {
   clientTrouve.reparations.push(nouvelleReparation);
   enregistrerClients(clients);
 
-  res.send(`<h1>✅ Réparation enregistrée</h1>
+  res.send(`
+    <h1>✅ Réparation enregistrée</h1>
     <p><b>Client :</b> ${clientTrouve.nom}</p>
     <p><b>Appareil :</b> ${appareil}</p>
     <p><b>Problème :</b> ${probleme}</p>
     <p><b>Statut :</b> ${statut}</p>
-    <p><a href="/reparations">⬅ Retour</a></p>`);
+    <p><b>Date :</b> ${nouvelleReparation.date}</p>
+    <p><a href="/reparations">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
 });
 
 // ================== LANCEMENT ==================
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });
- 
