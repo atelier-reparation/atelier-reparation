@@ -28,11 +28,13 @@ app.get("/", (req, res) => {
     <ul>
       <li><a href="/clients">👥 Ajouter un client</a></li>
       <li><a href="/clients/liste">📂 Liste des clients</a></li>
+      <li><a href="/factures">🧾 Créer une facture</a></li>
+      <li><a href="/reparations">🔧 Ajouter une réparation</a></li>
     </ul>
   `);
 });
 
-// ================= CLIENTS (AJOUT) =================
+// ================= CLIENTS =================
 app.get("/clients", (req, res) => {
   res.sendFile(path.join(__dirname, "clients.html"));
 });
@@ -71,7 +73,7 @@ app.post("/clients", (req, res) => {
   `);
 });
 
-// ================= CLIENTS (LISTE) =================
+// Liste des clients
 app.get("/clients/liste", (req, res) => {
   const clients = lireClients();
 
@@ -83,11 +85,88 @@ app.get("/clients/liste", (req, res) => {
   clients.forEach(c => {
     html += `<li>
       <b>${c.nom}</b> (${c.email}, ${c.telephone}) - ${c.ville}, ${c.pays}
+      <ul>
+        <li>Factures : ${c.factures.length}</li>
+        <li>Réparations : ${c.reparations.length}</li>
+      </ul>
     </li>`;
   });
   html += "</ul><p><a href='/'>🏠 Accueil</a></p>";
 
   res.send(html);
+});
+
+// ================= FACTURES =================
+app.get("/factures", (req, res) => {
+  res.sendFile(path.join(__dirname, "factures.html"));
+});
+
+app.post("/factures", (req, res) => {
+  const { client, numero, montant } = req.body;
+  let clients = lireClients();
+
+  const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
+  if (!clientTrouve) {
+    return res.send(`<h2>❌ Client "${client}" introuvable</h2>
+                     <a href="/clients">Ajouter un client</a>`);
+  }
+
+  const nouvelleFacture = {
+    id: clientTrouve.factures.length + 1,
+    numero,
+    montant,
+    date: new Date().toLocaleDateString()
+  };
+
+  clientTrouve.factures.push(nouvelleFacture);
+  enregistrerClients(clients);
+
+  res.send(`
+    <h1>✅ Facture enregistrée</h1>
+    <p><b>Client :</b> ${clientTrouve.nom}</p>
+    <p><b>Numéro :</b> ${numero}</p>
+    <p><b>Montant :</b> ${montant} €</p>
+    <p><b>Date :</b> ${nouvelleFacture.date}</p>
+    <button onclick="window.print()">🖨️ Imprimer</button>
+    <p><a href="/factures">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
+});
+
+// ================= RÉPARATIONS =================
+app.get("/reparations", (req, res) => {
+  res.sendFile(path.join(__dirname, "reparations.html"));
+});
+
+app.post("/reparations", (req, res) => {
+  const { client, appareil, probleme, statut } = req.body;
+  let clients = lireClients();
+
+  const clientTrouve = clients.find(c => c.nom.toLowerCase() === client.toLowerCase());
+  if (!clientTrouve) {
+    return res.send(`<h2>❌ Client "${client}" introuvable</h2>
+                     <a href="/clients">Ajouter un client</a>`);
+  }
+
+  const nouvelleReparation = {
+    id: clientTrouve.reparations.length + 1,
+    appareil,
+    probleme,
+    statut,
+    date: new Date().toLocaleDateString()
+  };
+
+  clientTrouve.reparations.push(nouvelleReparation);
+  enregistrerClients(clients);
+
+  res.send(`
+    <h1>✅ Réparation enregistrée</h1>
+    <p><b>Client :</b> ${clientTrouve.nom}</p>
+    <p><b>Appareil :</b> ${appareil}</p>
+    <p><b>Problème :</b> ${probleme}</p>
+    <p><b>Statut :</b> ${statut}</p>
+    <p><b>Date :</b> ${nouvelleReparation.date}</p>
+    <p><a href="/reparations">⬅ Retour</a> | <a href="/">🏠 Accueil</a></p>
+  `);
 });
 
 // ================== LANCEMENT ==================
