@@ -195,7 +195,7 @@ app.post("/factures", (req, res) => {
     id: clientTrouve.factures.length + 1,
     numero,
     montant,
-    date: new Date().toLocaleDateString()
+    date: new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date())
   };
 
   clientTrouve.factures.push(nouvelleFacture);
@@ -205,6 +205,7 @@ app.post("/factures", (req, res) => {
     <p><b>Client :</b> ${clientTrouve.nom}</p>
     <p><b>Numéro :</b> ${numero}</p>
     <p><b>Montant :</b> ${montant} €</p>
+    <p><b>Date :</b> ${nouvelleFacture.date}</p>
     <button onclick="window.print()">🖨️ Imprimer</button>
     <p><a href="/factures">⬅ Retour</a></p>`);
 });
@@ -228,7 +229,9 @@ app.post("/reparations", (req, res) => {
     appareil,
     probleme,
     statut,
-    date: date && date.trim() !== "" ? date : new Date().toLocaleDateString()
+    date: date && date.trim() !== "" 
+          ? date 
+          : new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date())
   };
 
   clientTrouve.reparations.push(nouvelleReparation);
