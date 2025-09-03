@@ -1,0 +1,6 @@
+{
+  "name": "atelier-reparation",
+  "description": "Application de gestion pour atelier de réparation",
+  "repository": "https://github.com/atelier-reparation/atelier-reparation",
+  "keywords": ["node", "express", "heroku"]
+}
