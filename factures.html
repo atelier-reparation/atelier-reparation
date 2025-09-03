@@ -6,111 +6,81 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
     h1 { text-align: center; }
-    .facture {
-      border: 1px solid #333;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-    .header, .footer {
-      display: flex;
-      justify-content: space-between;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background: #f0f0f0;
-    }
-    .total {
-      text-align: right;
-      font-size: 1.2em;
-      font-weight: bold;
-    }
-    .actions {
-      margin-top: 20px;
-      text-align: center;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #aaa; padding: 10px; text-align: left; }
+    th { background: #f0f0f0; }
+    .add-btn { margin-top: 10px; }
   </style>
 </head>
 <body>
   <h1>🧾 Création d'une facture</h1>
-  <form action="/factures" method="post">
+  <form id="factureForm" action="/factures" method="post">
     <label>Client (nom exact) :</label><br>
     <input type="text" name="client" required><br><br>
 
     <label>Numéro de facture :</label><br>
     <input type="text" name="numero" required><br><br>
 
-    <label>Montant total (€) :</label><br>
-    <input type="number" name="montant" required><br><br>
-
-    <button type="submit">💾 Enregistrer la facture</button>
-  </form>
-
-  <hr>
-
-  <div class="facture">
-    <div class="header">
-      <div>
-        <h2>Atelier Réparation</h2>
-        <p>58 Chemin de la Lionne <br>
-        38460 Trept<br>
-        contact@atelier-reparation.fr</p>
-      </div>
-      <div>
-        <img src="ChatGPT Image 29 août 2025 à 21_01_47.png" alt="Logo" width="100">
-      </div>
-    </div>
-
-    <h2>Facture #0001</h2>
-    <p><b>Date :</b> 3 septembre 2025</p>
-
-    <h3>Client :</h3>
-    <p>Nom du client<br>Email : client@mail.com<br>Téléphone : 06 00 00 00 00</p>
-
-    <table>
+    <table id="lignes">
       <thead>
         <tr>
           <th>Désignation</th>
           <th>Quantité</th>
           <th>Prix unitaire (€)</th>
           <th>Total (€)</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Réparation écran iPhone</td>
-          <td>1</td>
-          <td>90</td>
-          <td>90</td>
-        </tr>
-        <tr>
-          <td>Changement batterie</td>
-          <td>1</td>
-          <td>50</td>
-          <td>50</td>
+          <td><input type="text" name="designation[]" required></td>
+          <td><input type="number" name="quantite[]" value="1" min="1" required></td>
+          <td><input type="number" name="prix[]" value="0" required></td>
+          <td class="ligneTotal">0</td>
+          <td><button type="button" onclick="supprimerLigne(this)">❌</button></td>
         </tr>
       </tbody>
     </table>
 
-    <p class="total">Total : 140 €</p>
+    <button type="button" class="add-btn" onclick="ajouterLigne()">➕ Ajouter une ligne</button>
 
-    <div class="footer">
-      <p>Conditions de paiement : CB/Espèce </p>
-      <p>Merci de votre confiance 🙏</p>
-    </div>
+    <h3>Total global : <span id="totalGlobal">0</span> €</h3>
 
-    <div class="actions">
-      <button onclick="window.print()">🖨️ Imprimer</button>
-    </div>
-  </div>
+    <button type="submit">💾 Enregistrer la facture</button>
+  </form>
+
+  <script>
+    function recalculer() {
+      let total = 0;
+      document.querySelectorAll("#lignes tbody tr").forEach(tr => {
+        const qte = parseFloat(tr.querySelector("input[name='quantite[]']").value) || 0;
+        const prix = parseFloat(tr.querySelector("input[name='prix[]']").value) || 0;
+        const totalLigne = qte * prix;
+        tr.querySelector(".ligneTotal").textContent = totalLigne.toFixed(2);
+        total += totalLigne;
+      });
+      document.getElementById("totalGlobal").textContent = total.toFixed(2);
+    }
+
+    function ajouterLigne() {
+      const tbody = document.querySelector("#lignes tbody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="text" name="designation[]" required></td>
+        <td><input type="number" name="quantite[]" value="1" min="1" required></td>
+        <td><input type="number" name="prix[]" value="0" required></td>
+        <td class="ligneTotal">0</td>
+        <td><button type="button" onclick="supprimerLigne(this)">❌</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function supprimerLigne(btn) {
+      btn.parentElement.parentElement.remove();
+      recalculer();
+    }
+
+    document.addEventListener("input", recalculer);
+  </script>
 </body>
 </html>
