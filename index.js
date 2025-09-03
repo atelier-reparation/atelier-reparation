@@ -243,7 +243,7 @@ app.post("/factures", (req, res) => {
         <div class="header">
           <div>
             <h2>Atelier Réparation</h2>
-            <p>123 Rue Exemple<br>
+            <p>58 chemin de la Lionne<br>
             38460 Trept<br>
             contact@atelier-reparation.fr</p>
           </div>
